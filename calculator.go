@@ -19,6 +19,14 @@ func (t Token) IsPlusMinus() bool {
 	return false
 }
 
+func (t Token) IsMultiDiv() bool {
+	switch t.Type {
+	case TokenTypeMULTI, TokenTypeDIV:
+		return true
+	}
+	return false
+}
+
 type TokenType string
 
 const (
@@ -171,20 +179,76 @@ func (t *Interpreter) currentToken() Token {
 	return t.lexer.Token()
 }
 
-func (t *Interpreter) factor() (float64, error) {
-	tokenStart := t.currentToken()
+func (t *Interpreter) term() (float64, error) {
+
+	token := t.currentToken()
+
+	if token.Type == TokenTypeLPARAN {
+		if err := t.eat(TokenTypeLPARAN); err != nil {
+			return 0, err
+		}
+		result, err := t.expr()
+		if err != nil {
+			return 0, err
+		}
+		if err := t.eat(TokenTypeRPARAN); err != nil {
+			return 0, err
+		}
+		return result, nil
+	}
+
 	if err := t.eat(TokenTypeNUM); err != nil {
 		return 0, err
 	}
 
-	result, err := strconv.ParseFloat(tokenStart.Value, 64)
+	result, err := strconv.ParseFloat(token.Value, 64)
 	if err != nil {
 		return 0, err
 	}
 	return result, nil
 }
 
+func (t *Interpreter) factor() (float64, error) {
+	result, err := t.term()
+	if err != nil {
+		return 0, err
+	}
+
+	for t.currentToken().IsMultiDiv() {
+		op := t.currentToken()
+		switch op.Type {
+		case TokenTypeMULTI:
+			if err := t.eat(TokenTypeMULTI); err != nil {
+				return 0, err
+			}
+		case TokenTypeDIV:
+			if err := t.eat(TokenTypeDIV); err != nil {
+				return 0, err
+			}
+		}
+
+		num, err := t.term()
+
+		if err != nil {
+			return 0, err
+		}
+
+		switch op.Type {
+		case TokenTypeMULTI:
+			result = result * num
+		case TokenTypeDIV:
+			result = result / num
+		}
+	}
+
+	return result, nil
+}
+
 func (t *Interpreter) expr() (float64, error) {
+	if t.currentToken().Type == TokenTypeEOF {
+		return 0, nil
+	}
+
 	result, err := t.factor()
 	if err != nil {
 		return 0, err

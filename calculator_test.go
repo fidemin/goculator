@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/stretchr/testify/assert"
+	"math"
 	"testing"
 )
 
@@ -74,19 +75,44 @@ func TestInterpreter(t *testing.T) {
 			"32+21.1-21",
 			32.1,
 		},
+		{
+
+			"2.1-2*4/2+1",
+			-0.9,
+		},
+		{
+			"2.1/(2.1+4.2)",
+			0.33,
+		},
+		{
+			"2.1/0",
+			math.Inf(0),
+		},
+		{
+			"0/0",
+			math.NaN(),
+		},
+		{
+			"",
+			0,
+		},
 	}
 
 	for _, data := range testdata {
-		t := NewInterpreter(data.input)
+		inter := NewInterpreter(data.input)
 
-		result, err := t.expr()
+		result, err := inter.expr()
 
 		if err != nil {
 			assert.Fail(err.Error())
 			return
 		}
 
-		assert.InDelta(data.result, result, 0.01)
+		if math.IsNaN(data.result) {
+			assert.True(math.IsNaN(result))
+		} else {
+			assert.InDelta(data.result, result, 0.01)
+		}
 
 	}
 }
