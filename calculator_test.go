@@ -12,13 +12,29 @@ func TestLexer(t *testing.T) {
 		result []Token
 	}{
 		{
-			"3+2-1",
+			"32+21-1 /13.2 *23",
 			[]Token{
-				Token{TokenTypeNUM, "3"},
+				Token{TokenTypeNUM, "32"},
 				Token{TokenTypePLUS, "+"},
-				Token{TokenTypeNUM, "2"},
+				Token{TokenTypeNUM, "21"},
 				Token{TokenTypeMINUS, "-"},
 				Token{TokenTypeNUM, "1"},
+				Token{TokenTypeDIV, "/"},
+				Token{TokenTypeNUM, "13.2"},
+				Token{TokenTypeMULTI, "*"},
+				Token{TokenTypeNUM, "23"},
+			},
+		},
+		{
+			"32+(21-1.11)",
+			[]Token{
+				Token{TokenTypeNUM, "32"},
+				Token{TokenTypePLUS, "+"},
+				Token{TokenTypeLPARAN, "("},
+				Token{TokenTypeNUM, "21"},
+				Token{TokenTypeMINUS, "-"},
+				Token{TokenTypeNUM, "1.11"},
+				Token{TokenTypeRPARAN, ")"},
 			},
 		},
 		{
