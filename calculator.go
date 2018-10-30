@@ -11,6 +11,14 @@ type Token struct {
 	Value string
 }
 
+func (t Token) IsPlusMinus() bool {
+	switch t.Type {
+	case TokenTypePLUS, TokenTypeMINUS:
+		return true
+	}
+	return false
+}
+
 type TokenType string
 
 const (
@@ -129,4 +137,85 @@ func (l *Lexer) isIntOrDot() bool {
 		return false
 	}
 	return true
+}
+
+type Interpreter struct {
+	input string
+	lexer *Lexer
+}
+
+func NewInterpreter(input string) *Interpreter {
+	interpret := new(Interpreter)
+	interpret.input = input
+	lexer := NewLexer(input)
+	interpret.lexer = lexer
+	interpret.lexer.Scan()
+	return interpret
+}
+
+func (t *Interpreter) eat(tokenType TokenType) error {
+	if t.currentToken().Type != tokenType {
+		return errors.New(
+			fmt.Sprintf(
+				"expected token type %s is not matching currunt token type %s",
+				tokenType,
+				t.lexer.Token().Type,
+			),
+		)
+	}
+	t.lexer.Scan()
+	return t.lexer.Err()
+}
+
+func (t *Interpreter) currentToken() Token {
+	return t.lexer.Token()
+}
+
+func (t *Interpreter) factor() (float64, error) {
+	tokenStart := t.currentToken()
+	if err := t.eat(TokenTypeNUM); err != nil {
+		return 0, err
+	}
+
+	result, err := strconv.ParseFloat(tokenStart.Value, 64)
+	if err != nil {
+		return 0, err
+	}
+	return result, nil
+}
+
+func (t *Interpreter) expr() (float64, error) {
+	result, err := t.factor()
+	if err != nil {
+		return 0, err
+	}
+
+	for t.currentToken().IsPlusMinus() {
+		op := t.currentToken()
+		switch op.Type {
+		case TokenTypePLUS:
+			if err := t.eat(TokenTypePLUS); err != nil {
+				return 0, err
+			}
+		case TokenTypeMINUS:
+			if err := t.eat(TokenTypeMINUS); err != nil {
+				return 0, err
+			}
+		}
+
+		num, err := t.factor()
+
+		if err != nil {
+			return 0, err
+		}
+
+		switch op.Type {
+		case TokenTypePLUS:
+			result = result + num
+		case TokenTypeMINUS:
+			result = result - num
+		}
+	}
+
+	return result, nil
 }

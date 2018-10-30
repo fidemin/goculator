@@ -63,3 +63,30 @@ func TestLexer(t *testing.T) {
 		}
 	}
 }
+
+func TestInterpreter(t *testing.T) {
+	assert := assert.New(t)
+	var testdata = []struct {
+		input  string
+		result float64
+	}{
+		{
+			"32+21.1-21",
+			32.1,
+		},
+	}
+
+	for _, data := range testdata {
+		t := NewInterpreter(data.input)
+
+		result, err := t.expr()
+
+		if err != nil {
+			assert.Fail(err.Error())
+			return
+		}
+
+		assert.InDelta(data.result, result, 0.01)
+
+	}
+}
