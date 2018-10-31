@@ -182,8 +182,9 @@ func (l *Lexer) isStr() bool {
 }
 
 type Interpreter struct {
-	input string
-	lexer *Lexer
+	input   string
+	lexer   *Lexer
+	context Context
 }
 
 func NewInterpreter(input string) *Interpreter {
@@ -193,6 +194,14 @@ func NewInterpreter(input string) *Interpreter {
 	interpret.lexer = lexer
 	interpret.lexer.Scan()
 	return interpret
+}
+
+func (t *Interpreter) SetContext(c Context) {
+	t.context = c
+}
+
+func (t *Interpreter) Interpret() (float64, error) {
+	return t.expr()
 }
 
 func (t *Interpreter) eat(tokenType TokenType) error {
@@ -213,10 +222,19 @@ func (t *Interpreter) currentToken() Token {
 	return t.lexer.Token()
 }
 
+func (t *Interpreter) value(key string) (float64, error) {
+	if t.context == nil {
+		return 0, errors.New("no context given for variable")
+	}
+
+	return t.context.Value(key)
+}
+
 func (t *Interpreter) term() (float64, error) {
 
 	token := t.currentToken()
 
+	// For parantheses case
 	if token.Type == TokenTypeLPARAN {
 		if err := t.eat(TokenTypeLPARAN); err != nil {
 			return 0, err
@@ -231,6 +249,20 @@ func (t *Interpreter) term() (float64, error) {
 		return result, nil
 	}
 
+	// For variable case
+	if token.Type == TokenTypeVAR {
+		if err := t.eat(TokenTypeVAR); err != nil {
+			return 0, err
+		}
+
+		value, err := t.value(token.Value)
+		if err != nil {
+			return 0, err
+		}
+		return value, nil
+	}
+
+	// For number case
 	if err := t.eat(TokenTypeNUM); err != nil {
 		return 0, err
 	}
@@ -316,4 +348,26 @@ func (t *Interpreter) expr() (float64, error) {
 	}
 
 	return result, nil
+}
+
+type Context interface {
+	Value(string) (float64, error)
+}
+
+type DefaultContext struct {
+	keyValues map[string]float64
+}
+
+func NewDefaultContext(keyValues map[string]float64) *DefaultContext {
+	c := new(DefaultContext)
+	c.keyValues = keyValues
+	return c
+}
+
+func (c *DefaultContext) Value(key string) (float64, error) {
+	value, ok := c.keyValues[key]
+	if !ok {
+		return 0, errors.New(fmt.Sprintf("no value for key '%s'", key))
+	}
+	return value, nil
 }

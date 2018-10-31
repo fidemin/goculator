@@ -107,15 +107,27 @@ func TestInterpreter(t *testing.T) {
 			math.NaN(),
 		},
 		{
+			"2.1/(var1 + var2)",
+			0.33,
+		},
+		{
 			"",
 			0,
 		},
 	}
 
+	context := NewDefaultContext(
+		map[string]float64{
+			"var1": 2.1,
+			"var2": 4.2,
+		},
+	)
+
 	for _, data := range testdata {
 		inter := NewInterpreter(data.input)
+		inter.SetContext(context)
 
-		result, err := inter.expr()
+		result, err := inter.Interpret()
 
 		if err != nil {
 			assert.Fail(err.Error())
