@@ -39,6 +39,20 @@ func TestLexer(t *testing.T) {
 			},
 		},
 		{
+			"32+(21-var_1k)-1",
+			[]Token{
+				Token{TokenTypeNUM, "32"},
+				Token{TokenTypePLUS, "+"},
+				Token{TokenTypeLPARAN, "("},
+				Token{TokenTypeNUM, "21"},
+				Token{TokenTypeMINUS, "-"},
+				Token{TokenTypeVAR, "var_1k"},
+				Token{TokenTypeRPARAN, ")"},
+				Token{TokenTypeMINUS, "-"},
+				Token{TokenTypeNUM, "1"},
+			},
+		},
+		{
 			"",
 			[]Token{},
 		},

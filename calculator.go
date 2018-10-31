@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 )
 
@@ -31,6 +32,7 @@ type TokenType string
 
 const (
 	TokenTypeNUM    TokenType = "NUM"
+	TokenTypeVAR    TokenType = "VAR"
 	TokenTypePLUS   TokenType = "PLUS"
 	TokenTypeMINUS  TokenType = "MINUS"
 	TokenTypeMULTI  TokenType = "MULTI"
@@ -85,8 +87,13 @@ func (l *Lexer) Scan() bool {
 		l.currentChar = l.text[l.pos : l.pos+1]
 	}
 
-	if l.isSpace(l.currentChar) {
+	if l.isSpace() {
 		l.skipSpace()
+	}
+
+	if l.isStr() {
+		l.current = Token{TokenTypeVAR, l.variable()}
+		return true
 	}
 
 	if l.isIntOrDot() {
@@ -106,12 +113,8 @@ func (l *Lexer) Scan() bool {
 	return false
 }
 
-func (l *Lexer) isEOF() bool {
-	return l.length <= l.pos
-}
-
 func (l *Lexer) skipSpace() {
-	for !l.isEOF() && l.isSpace(l.currentChar) {
+	for !l.isEOF() && l.isSpace() {
 		l.advance()
 	}
 }
@@ -125,6 +128,22 @@ func (l *Lexer) number() string {
 	return number
 }
 
+func (l *Lexer) variable() string {
+	variable := ""
+
+	// First character should be alphabet or _
+	if !l.isEOF() && l.isStr() {
+		variable += l.currentChar
+		l.advance()
+	}
+
+	for !l.isEOF() && (l.isStr() || l.isInt()) {
+		variable += l.currentChar
+		l.advance()
+	}
+	return variable
+}
+
 func (l *Lexer) advance() {
 	l.pos++
 	if !l.isEOF() {
@@ -132,19 +151,34 @@ func (l *Lexer) advance() {
 	}
 }
 
-func (l *Lexer) isSpace(str string) bool {
-	return str == " "
+func (l *Lexer) isEOF() bool {
+	return l.length <= l.pos
+}
+
+func (l *Lexer) isSpace() bool {
+	return l.currentChar == " "
 }
 
 func (l *Lexer) isIntOrDot() bool {
 	if l.currentChar == "." {
 		return true
 	}
+	return l.isInt()
+}
 
+func (l *Lexer) isInt() bool {
 	if _, err := strconv.Atoi(l.currentChar); err != nil {
 		return false
 	}
 	return true
+}
+
+func (l *Lexer) isStr() bool {
+	isStr, err := regexp.MatchString("^[a-zA-Z_]$", l.currentChar)
+	if err != nil {
+		return false
+	}
+	return isStr
 }
 
 type Interpreter struct {
