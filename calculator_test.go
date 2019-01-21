@@ -51,7 +51,7 @@ func TestCalculator(t *testing.T) {
 	)
 
 	for _, data := range testdata {
-		calc := NewCalculator(data.input)
+		calc := New(data.input)
 		calc.SetContext(context)
 
 		result, err := calc.Go()

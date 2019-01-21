@@ -12,7 +12,7 @@ type Calculator struct {
 	context Context
 }
 
-func NewCalculator(input string) *Calculator {
+func New(input string) *Calculator {
 	interpret := new(Calculator)
 	interpret.input = input
 	lexer := NewLexer(input)
