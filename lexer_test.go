@@ -9,58 +9,58 @@ func TestLexer(t *testing.T) {
 	assert := assert.New(t)
 	var testdata = []struct {
 		input  string
-		result []Token
+		result []token
 	}{
 		{
 			"32+21-1 /13.2 *23",
-			[]Token{
-				Token{TokenTypeNUM, "32"},
-				Token{TokenTypePLUS, "+"},
-				Token{TokenTypeNUM, "21"},
-				Token{TokenTypeMINUS, "-"},
-				Token{TokenTypeNUM, "1"},
-				Token{TokenTypeDIV, "/"},
-				Token{TokenTypeNUM, "13.2"},
-				Token{TokenTypeMULTI, "*"},
-				Token{TokenTypeNUM, "23"},
+			[]token{
+				token{tokenTypeNUM, "32"},
+				token{tokenTypePLUS, "+"},
+				token{tokenTypeNUM, "21"},
+				token{tokenTypeMINUS, "-"},
+				token{tokenTypeNUM, "1"},
+				token{tokenTypeDIV, "/"},
+				token{tokenTypeNUM, "13.2"},
+				token{tokenTypeMULTI, "*"},
+				token{tokenTypeNUM, "23"},
 			},
 		},
 		{
 			"32+(21-1.11)",
-			[]Token{
-				Token{TokenTypeNUM, "32"},
-				Token{TokenTypePLUS, "+"},
-				Token{TokenTypeLPARAN, "("},
-				Token{TokenTypeNUM, "21"},
-				Token{TokenTypeMINUS, "-"},
-				Token{TokenTypeNUM, "1.11"},
-				Token{TokenTypeRPARAN, ")"},
+			[]token{
+				token{tokenTypeNUM, "32"},
+				token{tokenTypePLUS, "+"},
+				token{tokenTypeLPARAN, "("},
+				token{tokenTypeNUM, "21"},
+				token{tokenTypeMINUS, "-"},
+				token{tokenTypeNUM, "1.11"},
+				token{tokenTypeRPARAN, ")"},
 			},
 		},
 		{
 			"32+(21-var_1k)-1",
-			[]Token{
-				Token{TokenTypeNUM, "32"},
-				Token{TokenTypePLUS, "+"},
-				Token{TokenTypeLPARAN, "("},
-				Token{TokenTypeNUM, "21"},
-				Token{TokenTypeMINUS, "-"},
-				Token{TokenTypeVAR, "var_1k"},
-				Token{TokenTypeRPARAN, ")"},
-				Token{TokenTypeMINUS, "-"},
-				Token{TokenTypeNUM, "1"},
+			[]token{
+				token{tokenTypeNUM, "32"},
+				token{tokenTypePLUS, "+"},
+				token{tokenTypeLPARAN, "("},
+				token{tokenTypeNUM, "21"},
+				token{tokenTypeMINUS, "-"},
+				token{tokenTypeVAR, "var_1k"},
+				token{tokenTypeRPARAN, ")"},
+				token{tokenTypeMINUS, "-"},
+				token{tokenTypeNUM, "1"},
 			},
 		},
 		{
 			"",
-			[]Token{},
+			[]token{},
 		},
 	}
 
 	for _, data := range testdata {
-		lexer := NewLexer(data.input)
+		lexer := newLexer(data.input)
 
-		tokens := make([]Token, 0)
+		tokens := make([]token, 0)
 		for lexer.Scan() {
 			token := lexer.Token()
 			tokens = append(tokens, token)

@@ -7,79 +7,79 @@ import (
 	"strconv"
 )
 
-type Token struct {
-	Type  TokenType
+type token struct {
+	Type  tokenType
 	Value string
 }
 
-func (t Token) IsPlusMinus() bool {
+func (t token) IsPlusMinus() bool {
 	switch t.Type {
-	case TokenTypePLUS, TokenTypeMINUS:
+	case tokenTypePLUS, tokenTypeMINUS:
 		return true
 	}
 	return false
 }
 
-func (t Token) IsMultiDiv() bool {
+func (t token) IsMultiDiv() bool {
 	switch t.Type {
-	case TokenTypeMULTI, TokenTypeDIV:
+	case tokenTypeMULTI, tokenTypeDIV:
 		return true
 	}
 	return false
 }
 
-type TokenType string
+type tokenType string
 
 const (
-	TokenTypeNUM    TokenType = "NUM"
-	TokenTypeVAR    TokenType = "VAR"
-	TokenTypePLUS   TokenType = "PLUS"
-	TokenTypeMINUS  TokenType = "MINUS"
-	TokenTypeMULTI  TokenType = "MULTI"
-	TokenTypeDIV    TokenType = "DIV"
-	TokenTypeEOF    TokenType = "EOF"
-	TokenTypeNONE   TokenType = "NONE"
-	TokenTypeLPARAN TokenType = "LPARAN"
-	TokenTypeRPARAN TokenType = "RPARAN"
+	tokenTypeNUM    tokenType = "NUM"
+	tokenTypeVAR    tokenType = "VAR"
+	tokenTypePLUS   tokenType = "PLUS"
+	tokenTypeMINUS  tokenType = "MINUS"
+	tokenTypeMULTI  tokenType = "MULTI"
+	tokenTypeDIV    tokenType = "DIV"
+	tokenTypeEOF    tokenType = "EOF"
+	tokenTypeNONE   tokenType = "NONE"
+	tokenTypeLPARAN tokenType = "LPARAN"
+	tokenTypeRPARAN tokenType = "RPARAN"
 )
 
-var tokenTypeMap = map[string]TokenType{
-	"+": TokenTypePLUS,
-	"-": TokenTypeMINUS,
-	"*": TokenTypeMULTI,
-	"/": TokenTypeDIV,
-	"(": TokenTypeLPARAN,
-	")": TokenTypeRPARAN,
+var tokenTypeMap = map[string]tokenType{
+	"+": tokenTypePLUS,
+	"-": tokenTypeMINUS,
+	"*": tokenTypeMULTI,
+	"/": tokenTypeDIV,
+	"(": tokenTypeLPARAN,
+	")": tokenTypeRPARAN,
 }
 
-type Lexer struct {
+type lexer struct {
 	text        string
 	length      int
-	current     Token
+	current     token
 	currentChar string
 	pos         int
 	err         error
 }
 
-func NewLexer(text string) *Lexer {
-	lexer := new(Lexer)
+func newLexer(text string) *lexer {
+	lexer := new(lexer)
 	lexer.text = text
 	lexer.length = len(text)
-	lexer.current = Token{}
+	lexer.current = token{}
 	return lexer
 }
 
-func (l *Lexer) Token() Token {
+func (l *lexer) Token() token {
 	return l.current
 }
 
-func (l *Lexer) Err() error {
+func (l *lexer) Err() error {
 	return l.err
 }
 
-func (l *Lexer) Scan() bool {
+func (l *lexer) Scan() bool {
 	if l.isEOF() {
-		l.current = Token{TokenTypeEOF, ""}
+		l.current = token{tokenTypeEOF, ""}
 		return false
 	}
 
@@ -92,18 +92,18 @@ func (l *Lexer) Scan() bool {
 	}
 
 	if l.isStr() {
-		l.current = Token{TokenTypeVAR, l.variable()}
+		l.current = token{tokenTypeVAR, l.variable()}
 		return true
 	}
 
 	if l.isIntOrDot() {
-		l.current = Token{TokenTypeNUM, l.number()}
+		l.current = token{tokenTypeNUM, l.number()}
 		return true
 	}
 
 	switch l.currentChar {
 	case "+", "-", "*", "/", ")", "(":
-		l.current = Token{tokenTypeMap[l.currentChar], l.currentChar}
+		l.current = token{tokenTypeMap[l.currentChar], l.currentChar}
 		l.advance()
 		return true
 	}
@@ -113,13 +113,13 @@ func (l *Lexer) Scan() bool {
 	return false
 }
 
-func (l *Lexer) skipSpace() {
+func (l *lexer) skipSpace() {
 	for !l.isEOF() && l.isSpace() {
 		l.advance()
 	}
 }
 
-func (l *Lexer) number() string {
+func (l *lexer) number() string {
 	number := ""
 	for !l.isEOF() && l.isIntOrDot() {
 		number += l.currentChar
@@ -128,7 +128,7 @@ func (l *Lexer) number() string {
 	return number
 }
 
-func (l *Lexer) variable() string {
+func (l *lexer) variable() string {
 	variable := ""
 
 	// First character should be alphabet or _
@@ -144,36 +144,36 @@ func (l *Lexer) variable() string {
 	return variable
 }
 
-func (l *Lexer) advance() {
+func (l *lexer) advance() {
 	l.pos++
 	if !l.isEOF() {
 		l.currentChar = l.text[l.pos : l.pos+1]
 	}
 }
 
-func (l *Lexer) isEOF() bool {
+func (l *lexer) isEOF() bool {
 	return l.length <= l.pos
 }
 
-func (l *Lexer) isSpace() bool {
+func (l *lexer) isSpace() bool {
 	return l.currentChar == " "
 }
 
-func (l *Lexer) isIntOrDot() bool {
+func (l *lexer) isIntOrDot() bool {
 	if l.currentChar == "." {
 		return true
 	}
 	return l.isInt()
 }
 
-func (l *Lexer) isInt() bool {
+func (l *lexer) isInt() bool {
 	if _, err := strconv.Atoi(l.currentChar); err != nil {
 		return false
 	}
 	return true
 }
 
-func (l *Lexer) isStr() bool {
+func (l *lexer) isStr() bool {
 	isStr, err := regexp.MatchString("^[a-zA-Z_]$", l.currentChar)
 	if err != nil {
 		return false

@@ -2,18 +2,18 @@
 
 Arithmetic calculator for Golang
 
-## Simple Use
+## Usage - Simple
 
 It is very simple to use. 
 
 ``New`` function accepts arithmatic formular string, and returns ``Calculator`` instance. ``Go`` method calculates the formula and returns the result as float64.
 
-### Example
+#### Example
 ```go
 package main
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/yhmin84/goculator"
 )
@@ -42,7 +42,7 @@ The result will be printed as below.
 6
 ```
 
-## Variable Context
+## Usage - Variable Context
 
 Another feature is variable context interface, ``Context``, which has only one method ``Value``.
 
@@ -52,9 +52,9 @@ type Context interface {
 }
 ```
 
-The argument of the method is a variable and it returns the float64 value which matches the variable. The ``Calculator`` instance has SetContext method which accepts the interface as an argument. If the variable exists in the formula, it will be replaced with the result of ``Value`` method.
+The argument of the `Value` method is a string variable which would exist in the formula and it returns the float64. The ``Calculator`` instance has Bind method which accepts the interface as an argument. If the string variable in the formula, it will be replaced with the result of ``Value`` method.
 
-### Example
+#### Example
 ```go
 package main 
 
@@ -84,7 +84,7 @@ func (c *MockContext) Value(variable string) (float64, error) {
 func main() {
     input := "(32 + var) / 11"
     calc := goculator.New(input)
-    calc.SetContext(new(MockContext))
+    calc.Bind(new(MockContext))
     result, err := calc.Go()
 
     if err != nil {
@@ -103,9 +103,10 @@ func main() {
 6
 ```
 
-For convenience, ``DefaultContext`` struct is given in package.
+### DefaultContext
+For convenience, ``DefaultContext`` struct is given in this package.
 
-### Example
+#### Example
 ```go
 package main
 
@@ -124,7 +125,7 @@ func main() {
 
     input := "(32 + var) / 11"
     calc := goculator.New(input)
-    calc.SetContext(context)
+    calc.Bind(context)
     result, err := calc.Go()
 
     if err != nil {
@@ -137,4 +138,16 @@ func main() {
 }
 ```
 
-The result will be ``6``.
+``6`` will be printed.
+
+
+## Supported Operator
+| operator | explain | priority |
+| ---------|---------| -------- |
+| *        | multiplication | 1 |
+| /        | division | 1 |
+| +        | addition | 2 |
+| -        | subtraction | 2 |
+
+## References
+- [Let’s Build A Simple Interpreter. Part 1](https://ruslanspivak.com/lsbasi-part1/)

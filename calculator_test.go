@@ -34,12 +34,39 @@ func TestCalculator(t *testing.T) {
 			math.NaN(),
 		},
 		{
-			"2.1/(var1 + var2)",
-			0.33,
-		},
-		{
 			"",
 			0,
+		},
+	}
+
+	for _, data := range testdata {
+		calc := New(data.input)
+
+		result, err := calc.Go()
+
+		if err != nil {
+			assert.Fail(err.Error())
+			return
+		}
+
+		if math.IsNaN(data.result) {
+			assert.True(math.IsNaN(result))
+		} else {
+			assert.InDelta(data.result, result, 0.01)
+		}
+
+	}
+}
+
+func TestCalculatorWithContext(t *testing.T) {
+	assert := assert.New(t)
+	var testdata = []struct {
+		input  string
+		result float64
+	}{
+		{
+			"2.1/(var1 + var2)",
+			0.33,
 		},
 	}
 
@@ -52,7 +79,7 @@ func TestCalculator(t *testing.T) {
 
 	for _, data := range testdata {
 		calc := New(data.input)
-		calc.SetContext(context)
+		calc.Bind(context)
 
 		result, err := calc.Go()
 
