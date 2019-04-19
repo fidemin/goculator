@@ -6,25 +6,29 @@ import (
 	"strconv"
 )
 
+// Calculator calculates arithmetic expressions.
 type Calculator struct {
 	input   string
-	Lexer   *Lexer
+	lexer   *Lexer
 	context Context
 }
 
+// New returns new Calculator whose argument is arithmetic expressions to be calculated.
 func New(input string) *Calculator {
 	interpret := new(Calculator)
 	interpret.input = input
-	Lexer := NewLexer(input)
-	interpret.Lexer = Lexer
-	interpret.Lexer.Scan()
+	lexer := NewLexer(input)
+	interpret.lexer = lexer
+	interpret.lexer.Scan()
 	return interpret
 }
 
+// Bind accepts Context which is variable context.
 func (c *Calculator) Bind(context Context) {
 	c.context = context
 }
 
+// Go calculates arithmetic expressions and returns result and error.
 func (c *Calculator) Go() (float64, error) {
 	return c.expr()
 }
@@ -35,16 +39,16 @@ func (c *Calculator) eat(TokenType TokenType) error {
 			fmt.Sprintf(
 				"expected token type %s is not matching currunt token type %s",
 				TokenType,
-				c.Lexer.Token().Type,
+				c.lexer.Token().Type,
 			),
 		)
 	}
-	c.Lexer.Scan()
-	return c.Lexer.Err()
+	c.lexer.Scan()
+	return c.lexer.Err()
 }
 
 func (c *Calculator) currentToken() Token {
-	return c.Lexer.Token()
+	return c.lexer.Token()
 }
 
 func (c *Calculator) value(key string) (float64, error) {
@@ -55,7 +59,9 @@ func (c *Calculator) value(key string) (float64, error) {
 	return c.context.Value(key)
 }
 
-func (c *Calculator) term() (float64, error) {
+// factor executes grammar below and return float64 result and error.
+// grammar: NUM | VAR | LPARAN expr RPARAN
+func (c *Calculator) factor() (float64, error) {
 
 	token := c.currentToken()
 
@@ -99,8 +105,10 @@ func (c *Calculator) term() (float64, error) {
 	return result, nil
 }
 
-func (c *Calculator) factor() (float64, error) {
-	result, err := c.term()
+// term executes grammar below and return float64 result and error.
+// grammar: factor((MULTI|DIV)factor)*
+func (c *Calculator) term() (float64, error) {
+	result, err := c.factor()
 	if err != nil {
 		return 0, err
 	}
@@ -118,7 +126,7 @@ func (c *Calculator) factor() (float64, error) {
 			}
 		}
 
-		num, err := c.term()
+		num, err := c.factor()
 
 		if err != nil {
 			return 0, err
@@ -135,12 +143,15 @@ func (c *Calculator) factor() (float64, error) {
 	return result, nil
 }
 
+// expr executes grammar below and return float64 result and error.
+// grammar: term((PLUS|MINUS)term)*
 func (c *Calculator) expr() (float64, error) {
+
 	if c.currentToken().Type == TokenTypeEOF {
 		return 0, nil
 	}
 
-	result, err := c.factor()
+	result, err := c.term()
 	if err != nil {
 		return 0, err
 	}
@@ -158,7 +169,7 @@ func (c *Calculator) expr() (float64, error) {
 			}
 		}
 
-		num, err := c.factor()
+		num, err := c.term()
 
 		if err != nil {
 			return 0, err
