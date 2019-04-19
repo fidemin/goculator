@@ -8,79 +8,79 @@ import (
 
 type Calculator struct {
 	input   string
-	lexer   *lexer
+	Lexer   *Lexer
 	context Context
 }
 
 func New(input string) *Calculator {
 	interpret := new(Calculator)
 	interpret.input = input
-	lexer := newLexer(input)
-	interpret.lexer = lexer
-	interpret.lexer.Scan()
+	Lexer := NewLexer(input)
+	interpret.Lexer = Lexer
+	interpret.Lexer.Scan()
 	return interpret
 }
 
-func (t *Calculator) Bind(c Context) {
-	t.context = c
+func (c *Calculator) Bind(context Context) {
+	c.context = context
 }
 
-func (t *Calculator) Go() (float64, error) {
-	return t.expr()
+func (c *Calculator) Go() (float64, error) {
+	return c.expr()
 }
 
-func (t *Calculator) eat(tokenType tokenType) error {
-	if t.currenttoken().Type != tokenType {
+func (c *Calculator) eat(TokenType TokenType) error {
+	if c.currentToken().Type != TokenType {
 		return errors.New(
 			fmt.Sprintf(
 				"expected token type %s is not matching currunt token type %s",
-				tokenType,
-				t.lexer.Token().Type,
+				TokenType,
+				c.Lexer.Token().Type,
 			),
 		)
 	}
-	t.lexer.Scan()
-	return t.lexer.Err()
+	c.Lexer.Scan()
+	return c.Lexer.Err()
 }
 
-func (t *Calculator) currenttoken() token {
-	return t.lexer.Token()
+func (c *Calculator) currentToken() Token {
+	return c.Lexer.Token()
 }
 
-func (t *Calculator) value(key string) (float64, error) {
-	if t.context == nil {
+func (c *Calculator) value(key string) (float64, error) {
+	if c.context == nil {
 		return 0, errors.New("no context given for variable")
 	}
 
-	return t.context.Value(key)
+	return c.context.Value(key)
 }
 
-func (t *Calculator) term() (float64, error) {
+func (c *Calculator) term() (float64, error) {
 
-	token := t.currenttoken()
+	token := c.currentToken()
 
 	// For parantheses case
-	if token.Type == tokenTypeLPARAN {
-		if err := t.eat(tokenTypeLPARAN); err != nil {
+	if token.Type == TokenTypeLPARAN {
+		if err := c.eat(TokenTypeLPARAN); err != nil {
 			return 0, err
 		}
-		result, err := t.expr()
+		result, err := c.expr()
 		if err != nil {
 			return 0, err
 		}
-		if err := t.eat(tokenTypeRPARAN); err != nil {
+		if err := c.eat(TokenTypeRPARAN); err != nil {
 			return 0, err
 		}
 		return result, nil
 	}
 
 	// For variable case
-	if token.Type == tokenTypeVAR {
-		if err := t.eat(tokenTypeVAR); err != nil {
+	if token.Type == TokenTypeVAR {
+		if err := c.eat(TokenTypeVAR); err != nil {
 			return 0, err
 		}
 
-		value, err := t.value(token.Value)
+		value, err := c.value(token.Value)
 		if err != nil {
 			return 0, err
 		}
@@ -88,7 +88,7 @@ func (t *Calculator) term() (float64, error) {
 	}
 
 	// For number case
-	if err := t.eat(tokenTypeNUM); err != nil {
+	if err := c.eat(TokenTypeNUM); err != nil {
 		return 0, err
 	}
 
@@ -99,35 +99,35 @@ func (t *Calculator) term() (float64, error) {
 	return result, nil
 }
 
-func (t *Calculator) factor() (float64, error) {
-	result, err := t.term()
+func (c *Calculator) factor() (float64, error) {
+	result, err := c.term()
 	if err != nil {
 		return 0, err
 	}
 
-	for t.currenttoken().IsMultiDiv() {
-		op := t.currenttoken()
+	for c.isCurrentTokenMultiOrDiv() {
+		op := c.currentToken()
 		switch op.Type {
-		case tokenTypeMULTI:
-			if err := t.eat(tokenTypeMULTI); err != nil {
+		case TokenTypeMULTI:
+			if err := c.eat(TokenTypeMULTI); err != nil {
 				return 0, err
 			}
-		case tokenTypeDIV:
-			if err := t.eat(tokenTypeDIV); err != nil {
+		case TokenTypeDIV:
+			if err := c.eat(TokenTypeDIV); err != nil {
 				return 0, err
 			}
 		}
 
-		num, err := t.term()
+		num, err := c.term()
 
 		if err != nil {
 			return 0, err
 		}
 
 		switch op.Type {
-		case tokenTypeMULTI:
+		case TokenTypeMULTI:
 			result = result * num
-		case tokenTypeDIV:
+		case TokenTypeDIV:
 			result = result / num
 		}
 	}
@@ -135,42 +135,58 @@ func (t *Calculator) factor() (float64, error) {
 	return result, nil
 }
 
-func (t *Calculator) expr() (float64, error) {
-	if t.currenttoken().Type == tokenTypeEOF {
+func (c *Calculator) expr() (float64, error) {
+	if c.currentToken().Type == TokenTypeEOF {
 		return 0, nil
 	}
 
-	result, err := t.factor()
+	result, err := c.factor()
 	if err != nil {
 		return 0, err
 	}
 
-	for t.currenttoken().IsPlusMinus() {
-		op := t.currenttoken()
+	for c.isCurrentTokenPlusOrMinus() {
+		op := c.currentToken()
 		switch op.Type {
-		case tokenTypePLUS:
-			if err := t.eat(tokenTypePLUS); err != nil {
+		case TokenTypePLUS:
+			if err := c.eat(TokenTypePLUS); err != nil {
 				return 0, err
 			}
-		case tokenTypeMINUS:
-			if err := t.eat(tokenTypeMINUS); err != nil {
+		case TokenTypeMINUS:
+			if err := c.eat(TokenTypeMINUS); err != nil {
 				return 0, err
 			}
 		}
 
-		num, err := t.factor()
+		num, err := c.factor()
 
 		if err != nil {
 			return 0, err
 		}
 
 		switch op.Type {
-		case tokenTypePLUS:
+		case TokenTypePLUS:
 			result = result + num
-		case tokenTypeMINUS:
+		case TokenTypeMINUS:
 			result = result - num
 		}
 	}
 
 	return result, nil
+}
+
+func (c *Calculator) isCurrentTokenPlusOrMinus() bool {
+	cTokenType := c.currentToken().Type
+	if cTokenType == TokenTypePLUS || cTokenType == TokenTypeMINUS {
+		return true
+	}
+	return false
+}
+
+func (c *Calculator) isCurrentTokenMultiOrDiv() bool {
+	cTokenType := c.currentToken().Type
+	if cTokenType == TokenTypeMULTI || cTokenType == TokenTypeDIV {
+		return true
+	}
+	return false
 }
